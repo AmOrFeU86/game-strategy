@@ -14,6 +14,89 @@ const WAVE_BASE_COUNT = 3;
 const WAVE_GROWTH = 2;
 const SUBGROUP_DELAY = 800;
 
+// Economy
+const STARTING_MONEY = 100;
+const KILL_BONUS = 5;
+const MONEY_INTERVAL = 5000;
+
+// Game Mode: 'study' or 'exercise'
+let gameMode = 'study';
+
+// Exercise rewards
+const EXERCISE_REWARDS = { 1: 10, 2: 25, 3: 50 };
+const exercises = [
+    // Level 1 - Easy (10 coins)
+    { name: '1 Sentadilla', description: 'Haz 1 sentadilla', difficulty: 1 },
+    { name: '1 Flexión', description: 'Haz 1 flexión', difficulty: 1 },
+    { name: '5 Segundos Plancha', description: 'Mantén la plancha 5 segundos', difficulty: 1 },
+    
+    // Level 2 - Medium (25 coins)
+    { name: '3 Sentadillas', description: 'Haz 3 sentadillas', difficulty: 2 },
+    { name: '3 Flexiones', description: 'Haz 3 flexiones', difficulty: 2 },
+    { name: '10 Segundos Plancha', description: 'Mantén la plancha 10 segundos', difficulty: 2 },
+    
+    // Level 3 - Hard (50 coins)
+    { name: '5 Sentadillas', description: 'Haz 5 sentadillas', difficulty: 3 },
+    { name: '5 Flexiones', description: 'Haz 5 flexiones', difficulty: 3 },
+    { name: '20 Segundos Plancha', description: 'Mantén la plancha 20 segundos', difficulty: 3 }
+];
+
+// German Vocabulary Quiz
+const QUIZ_REWARDS = { 1: 5, 2: 15, 3: 30 };
+const vocabulary = [
+    // Level 1 - Basic (5 coins)
+    { word: 'Haus', answer: 'casa', difficulty: 1 },
+    { word: 'Hund', answer: 'perro', difficulty: 1 },
+    { word: 'Katze', answer: 'gato', difficulty: 1 },
+    { word: 'Wasser', answer: 'agua', difficulty: 1 },
+    { word: 'Essen', answer: 'comida', difficulty: 1 },
+    { word: 'Sonne', answer: 'sol', difficulty: 1 },
+    { word: 'Mond', answer: 'luna', difficulty: 1 },
+    { word: 'Auto', answer: 'coche', difficulty: 1 },
+    { word: 'Buch', answer: 'libro', difficulty: 1 },
+    { word: 'Hand', answer: 'mano', difficulty: 1 },
+    { word: 'Auge', answer: 'ojo', difficulty: 1 },
+    { word: 'Rot', answer: 'rojo', difficulty: 1 },
+    { word: 'Blau', answer: 'azul', difficulty: 1 },
+    { word: 'Grün', answer: 'verde', difficulty: 1 },
+    
+    // Level 2 - Medium (15 coins)
+    { word: 'Freund', answer: 'amigo', difficulty: 2 },
+    { word: 'Familie', answer: 'familia', difficulty: 2 },
+    { word: 'Schule', answer: 'escuela', difficulty: 2 },
+    { word: 'Baum', answer: 'arbol', difficulty: 2 },
+    { word: 'Stern', answer: 'estrella', difficulty: 2 },
+    { word: 'Herz', answer: 'corazon', difficulty: 2 },
+    { word: 'Zeit', answer: 'tiempo', difficulty: 2 },
+    { word: 'Tag', answer: 'dia', difficulty: 2 },
+    { word: 'Nacht', answer: 'noche', difficulty: 2 },
+    { word: 'Groß', answer: 'grande', difficulty: 2 },
+    { word: 'Klein', answer: 'pequeño', difficulty: 2 },
+    { word: 'Gut', answer: 'bueno', difficulty: 2 },
+    { word: 'Schlecht', answer: 'malo', difficulty: 2 },
+    { word: 'Glücklich', answer: 'feliz', difficulty: 2 },
+    { word: 'Traurig', answer: 'triste', difficulty: 2 },
+    
+    // Level 3 - Hard (30 coins)
+    { word: 'Schön', answer: 'hermoso', difficulty: 3 },
+    { word: 'Wichtig', answer: 'importante', difficulty: 3 },
+    { word: 'Gefährlich', answer: 'peligroso', difficulty: 3 },
+    { word: 'Abenteuer', answer: 'aventura', difficulty: 3 },
+    { word: 'Wissen', answer: 'conocimiento', difficulty: 3 },
+    { word: 'Berg', answer: 'montaña', difficulty: 3 },
+    { word: 'Fluss', answer: 'río', difficulty: 3 },
+    { word: 'Ozean', answer: 'océano', difficulty: 3 },
+    { word: 'Blume', answer: 'flor', difficulty: 3 },
+    { word: 'Schmetterling', answer: 'mariposa', difficulty: 3 }
+];
+
+// HQ and Turrets
+const HQ_HP = 50;
+const TURRET_HP = 8;
+const TURRET_DAMAGE = 1;
+const TURRET_RANGE = 4.0;
+const TURRET_COOLDOWN = 1500;
+
 // Unit type configurations
 const UNIT_TYPES = {
     soldier: {
@@ -25,7 +108,8 @@ const UNIT_TYPES = {
         attackCooldown: 1000,
         scale: 1.0,
         color: 0xcc3333,
-        canHeal: false
+        canHeal: false,
+        cost: 30
     },
     tank: {
         name: 'Tanque',
@@ -36,7 +120,8 @@ const UNIT_TYPES = {
         attackCooldown: 1500,
         scale: 1.4,
         color: 0x8b4513,
-        canHeal: false
+        canHeal: false,
+        cost: 100
     },
     sniper: {
         name: 'Francotirador',
@@ -47,7 +132,8 @@ const UNIT_TYPES = {
         attackCooldown: 2000,
         scale: 0.9,
         color: 0x2e8b57,
-        canHeal: false
+        canHeal: false,
+        cost: 75
     },
     medic: {
         name: 'Médico',
@@ -60,22 +146,62 @@ const UNIT_TYPES = {
         color: 0xffffff,
         canHeal: true,
         healAmount: 1,
-        healCooldown: 2000
+        healCooldown: 2000,
+        cost: 50
+    }
+};
+
+// Structure types
+const STRUCTURE_TYPES = {
+    wall: {
+        name: 'Muro',
+        hp: 10,
+        cost: 20,
+        size: 1,
+        color: 0x666666
+    },
+    mine: {
+        name: 'Mina',
+        hp: 5,
+        cost: 50,
+        size: 1,
+        color: 0xdaa520,
+        income: 10
+    },
+    refinery: {
+        name: 'Refinería',
+        hp: 8,
+        cost: 150,
+        size: 2,
+        color: 0xcd853f,
+        income: 30
     }
 };
 
 let scene, camera, renderer, raycaster, mouse;
 let ground;
 let units = [];
+let structures = [];
 let selectedUnits = [];
 let selectionStart = null;
 let isDragging = false;
 let gameOver = false;
 
+let money = STARTING_MONEY;
+let lastMoneyTime = 0;
+
 let waveNumber = 0;
 let waveTimer = WAVE_INTERVAL;
 let waveSpawning = false;
 let waveQueue = [];
+
+// Building mode
+let buildMode = null; // null, 'wall', 'mine', 'refinery'
+let buildPreview = null;
+
+// HQ references
+let playerHQ = null;
+let enemyHQ = null;
 
 const selectionBox = document.getElementById('selection-box');
 const redCountEl = document.getElementById('red-count');
@@ -125,6 +251,15 @@ function init() {
     mouse = new THREE.Vector2();
 
     createGround();
+    
+    // Create HQs
+    playerHQ = createHQ(-HALF_GRID + 4, -HALF_GRID + 4, 'red');
+    enemyHQ = createHQ(HALF_GRID - 4, HALF_GRID - 4, 'gray');
+    
+    // Create enemy turrets
+    createTurret(HALF_GRID - 8, HALF_GRID - 4, 'gray');
+    createTurret(HALF_GRID - 4, HALF_GRID - 8, 'gray');
+    
     spawnInitialUnits();
     setupEventListeners();
     animate();
@@ -379,6 +514,20 @@ function isValidCell(gx, gz) {
     return gx >= 0 && gx < GRID_SIZE && gz >= 0 && gz < GRID_SIZE;
 }
 
+function checkCollision(x, z, excludeStructure = null) {
+    for (const s of structures) {
+        if (!s.alive || s === excludeStructure) continue;
+        const halfSize = (s.size || 1) * CELL_SIZE / 2;
+        const sx = s.mesh.position.x;
+        const sz = s.mesh.position.z;
+        
+        if (Math.abs(x - sx) < halfSize + 0.5 && Math.abs(z - sz) < halfSize + 0.5) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function heuristic(a, b) {
     const dx = Math.abs(a.gx - b.gx);
     const dz = Math.abs(a.gz - b.gz);
@@ -506,6 +655,25 @@ function findNearestEnemy(unit) {
     return nearest;
 }
 
+function alertNearbyAllies(attackedUnit, attacker) {
+    if (!attackedUnit || !attacker || !attacker.alive) return;
+    
+    const alertRange = 8;
+    
+    for (const unit of units) {
+        if (!unit.alive || unit.team !== attackedUnit.team) continue;
+        if (unit === attackedUnit) continue;
+        if (unit.attackTarget && unit.attackTarget.alive) continue; // Already fighting
+        
+        const dist = unit.mesh.position.distanceTo(attackedUnit.mesh.position);
+        if (dist <= alertRange) {
+            unit.attackTarget = attacker;
+            unit.path = [];
+            unit.pathIndex = 0;
+        }
+    }
+}
+
 function computeFormationPositions(center, count) {
     const positions = [];
     if (count === 1) {
@@ -563,6 +731,12 @@ function moveUnit(unit, dt) {
                     unit.attackTarget.hp -= unit.damage;
                     unit.attackTarget.lastAttacker = unit;
                     unit.lastAttackTime = now;
+                    
+                    // Alert nearby allies when attacking
+                    if (unit.attackTarget.hp > 0) {
+                        alertNearbyAllies(unit.attackTarget, unit);
+                    }
+                    
                     if (unit.attackTarget.hp <= 0) {
                         killUnit(unit.attackTarget);
                         unit.attackTarget = null;
@@ -584,9 +758,23 @@ function moveUnit(unit, dt) {
     }
 
     if (unit.team === 'gray' && !unit.attackTarget && !unit.target) {
-        const nearest = findNearestEnemy(unit);
-        if (nearest) {
-            unit.attackTarget = nearest;
+        // Check for nearby player troops first (rango 6)
+        const nearestTroop = findNearestEnemy(unit);
+        if (nearestTroop) {
+            const distToTroop = unit.mesh.position.distanceTo(nearestTroop.mesh.position);
+            if (distToTroop <= 6) {
+                unit.attackTarget = nearestTroop;
+                return;
+            }
+        }
+        
+        // If no nearby troops, target player HQ
+        if (playerHQ && playerHQ.alive) {
+            unit.target = playerHQ.mesh.position.clone();
+            if (unit.path.length === 0) {
+                unit.path = aStar(unit.mesh.position, unit.target);
+                unit.pathIndex = 0;
+            }
         }
         return;
     }
@@ -607,9 +795,21 @@ function moveUnit(unit, dt) {
         }
 
         dir.normalize();
-        unit.mesh.position.add(dir.multiplyScalar(unit.speed * dt));
-        unit.mesh.rotation.y = Math.atan2(dir.x, dir.z);
-        unit.isMoving = true;
+        const newPos = unit.mesh.position.clone().add(dir.clone().multiplyScalar(unit.speed * dt));
+        
+        // Check collision before moving
+        if (!checkCollision(newPos.x, newPos.z)) {
+            unit.mesh.position.copy(newPos);
+            unit.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+            unit.isMoving = true;
+        } else {
+            // Skip this waypoint and try next
+            unit.pathIndex++;
+            if (unit.pathIndex >= unit.path.length) {
+                unit.path = [];
+                unit.pathIndex = 0;
+            }
+        }
         return;
     }
 
@@ -625,9 +825,14 @@ function moveUnit(unit, dt) {
     }
 
     dir.normalize();
-    unit.mesh.position.add(dir.multiplyScalar(unit.speed * dt));
-    unit.mesh.rotation.y = Math.atan2(dir.x, dir.z);
-    unit.isMoving = true;
+    const newPos = unit.mesh.position.clone().add(dir.clone().multiplyScalar(unit.speed * dt));
+    
+    // Check collision before moving
+    if (!checkCollision(newPos.x, newPos.z)) {
+        unit.mesh.position.copy(newPos);
+        unit.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+        unit.isMoving = true;
+    }
 }
 
 function animateUnit(unit, dt) {
@@ -695,20 +900,9 @@ function killUnit(unit) {
     const selIdx = selectedUnits.indexOf(unit);
     if (selIdx !== -1) selectedUnits.splice(selIdx, 1);
 
+    // Give money for killing enemies
     if (unit.team === 'gray') {
-        const killer = selectedUnits.length > 0 ? selectedUnits[0] : units.find(u => u.team === 'red' && u.alive);
-        if (killer) {
-            const offsetX = (Math.random() - 0.5) * 2;
-            const offsetZ = (Math.random() - 0.5) * 2;
-            // Spawn same type as the killed unit
-            const newUnit = createSoldier(
-                killer.mesh.position.x + offsetX,
-                killer.mesh.position.z + offsetZ,
-                'red',
-                unit.unitType
-            );
-            selectUnit(newUnit);
-        }
+        addMoney(KILL_BONUS);
     }
 
     updateUI();
@@ -737,10 +931,23 @@ function updateUI() {
 }
 
 function checkGameOver() {
-    const redCount = units.filter(u => u.alive && u.team === 'red').length;
+    // Check HQ destruction
+    if (playerHQ && !playerHQ.alive && !gameOver) {
+        endGame(false);
+    }
+    if (enemyHQ && !enemyHQ.alive && !gameOver) {
+        endGame(true);
+    }
+}
 
-    if (redCount === 0 && !gameOver) {
-        gameOver = true;
+function endGame(victory) {
+    if (gameOver) return;
+    gameOver = true;
+    
+    if (victory) {
+        messageEl.textContent = '¡VICTORIA!';
+        messageEl.className = 'win';
+    } else {
         messageEl.textContent = 'DERROTA';
         messageEl.className = 'lose';
     }
@@ -807,6 +1014,20 @@ function setupEventListeners() {
 
     canvas.addEventListener('mousemove', (e) => {
         if (gameOver) return;
+        
+        // Build mode preview
+        if (buildMode && buildPreview) {
+            const point = getGroundIntersection(e.clientX, e.clientY);
+            if (point) {
+                const { gx, gz } = worldToGrid(point.x, point.z);
+                const config = STRUCTURE_TYPES[buildMode];
+                const x = gx * CELL_SIZE - HALF_GRID + (config.size * CELL_SIZE) / 2;
+                const z = gz * CELL_SIZE - HALF_GRID + (config.size * CELL_SIZE) / 2;
+                buildPreview.position.set(x, 0.25, z);
+                buildPreview.visible = true;
+            }
+        }
+        
         if (selectionStart && e.button === 0) {
             const dx = e.clientX - selectionStart.x;
             const dy = e.clientY - selectionStart.y;
@@ -828,6 +1049,16 @@ function setupEventListeners() {
     canvas.addEventListener('mouseup', (e) => {
         if (gameOver) return;
         if (e.button === 0) {
+            // Handle build mode
+            if (buildMode) {
+                const point = getGroundIntersection(e.clientX, e.clientY);
+                if (point) {
+                    const { gx, gz } = worldToGrid(point.x, point.z);
+                    placeStructure(gx, gz);
+                }
+                return;
+            }
+            
             if (isDragging && selectionStart) {
                 const selected = getUnitsInRect(selectionStart.x, selectionStart.y, e.clientX, e.clientY);
                 deselectAll();
@@ -936,9 +1167,44 @@ function setupEventListeners() {
 
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') deselectAll();
+    // Buy button listeners
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const type = btn.dataset.type;
+            if (UNIT_TYPES[type]) {
+                buyUnit(type);
+            } else if (STRUCTURE_TYPES[type]) {
+                enterBuildMode(type);
+            }
+        });
     });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (buildMode) {
+                exitBuildMode();
+            } else {
+                deselectAll();
+            }
+        }
+        // Number keys for quick buy
+        if (e.key === '1') buyUnit('soldier');
+        if (e.key === '2') buyUnit('tank');
+        if (e.key === '3') buyUnit('sniper');
+        if (e.key === '4') buyUnit('medic');
+        if (e.key === '5') enterBuildMode('wall');
+        if (e.key === '6') enterBuildMode('mine');
+        if (e.key === '7') enterBuildMode('refinery');
+    });
+
+    // Mode toggle
+    const modeSwitch = document.getElementById('mode-switch');
+    if (modeSwitch) {
+        modeSwitch.addEventListener('change', (e) => {
+            gameMode = e.target.checked ? 'exercise' : 'study';
+            console.log('Game mode:', gameMode);
+        });
+    }
 
     window.addEventListener('resize', () => {
         const aspect = window.innerWidth / window.innerHeight;
@@ -952,6 +1218,732 @@ function setupEventListeners() {
     });
 }
 
+// Money system
+function updateMoneyUI() {
+    const moneyEl = document.getElementById('money-display');
+    if (moneyEl) moneyEl.textContent = `💰 ${money}`;
+    
+    // Update buy buttons
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+        const type = btn.dataset.type;
+        const config = UNIT_TYPES[type] || STRUCTURE_TYPES[type];
+        if (config) {
+            btn.classList.toggle('disabled', money < config.cost);
+        }
+    });
+}
+
+function addMoney(amount) {
+    money += amount;
+    updateMoneyUI();
+}
+
+function canAfford(cost) {
+    return money >= cost;
+}
+
+function spendMoney(amount) {
+    if (canAfford(amount)) {
+        money -= amount;
+        updateMoneyUI();
+        return true;
+    }
+    return false;
+}
+
+// Income generation
+function generateIncome() {
+    const now = Date.now();
+    if (now - lastMoneyTime >= MONEY_INTERVAL) {
+        structures.forEach(s => {
+            if (s.alive && s.income) {
+                addMoney(s.income);
+            }
+        });
+        lastMoneyTime = now;
+    }
+}
+
+// Create structure
+function createStructure(type, gx, gz, team) {
+    const config = STRUCTURE_TYPES[type];
+    if (!config) return null;
+    
+    const size = config.size;
+    const x = gx * CELL_SIZE - HALF_GRID + (size * CELL_SIZE) / 2;
+    const z = gz * CELL_SIZE - HALF_GRID + (size * CELL_SIZE) / 2;
+    
+    const group = new THREE.Group();
+    
+    // Main body
+    const bodyGeom = new THREE.BoxGeometry(
+        size * CELL_SIZE * 0.9,
+        config.hp * 0.15 + 0.3,
+        size * CELL_SIZE * 0.9
+    );
+    const bodyMat = new THREE.MeshLambertMaterial({ color: config.color });
+    const body = new THREE.Mesh(bodyGeom, bodyMat);
+    body.position.y = (config.hp * 0.15 + 0.3) / 2;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+    
+    // Income indicator for mines/refineries
+    if (config.income) {
+        const indicatorGeom = new THREE.SphereGeometry(0.2, 8, 8);
+        const indicatorMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
+        const indicator = new THREE.Mesh(indicatorGeom, indicatorMat);
+        indicator.position.y = config.hp * 0.15 + 0.6;
+        group.add(indicator);
+    }
+    
+    // HP Bar
+    const hpBarBgGeom = new THREE.PlaneGeometry(size * CELL_SIZE * 0.8, 0.1);
+    const hpBarBgMat = new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide });
+    const hpBarBg = new THREE.Mesh(hpBarBgGeom, hpBarBgMat);
+    hpBarBg.position.y = config.hp * 0.15 + 0.8;
+    hpBarBg.rotation.x = -Math.PI / 4;
+    group.add(hpBarBg);
+    
+    const hpBarGeom = new THREE.PlaneGeometry(size * CELL_SIZE * 0.8, 0.1);
+    const hpBarMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+    const hpBar = new THREE.Mesh(hpBarGeom, hpBarMat);
+    hpBar.position.y = config.hp * 0.15 + 0.8;
+    hpBar.position.z = 0.001;
+    hpBar.rotation.x = -Math.PI / 4;
+    group.add(hpBar);
+    
+    group.position.set(x, 0, z);
+    
+    const structure = {
+        mesh: group,
+        type,
+        team,
+        hp: config.hp,
+        maxHp: config.hp,
+        income: config.income || 0,
+        alive: true,
+        hpBar,
+        gx,
+        gz,
+        size
+    };
+    
+    scene.add(group);
+    structures.push(structure);
+    return structure;
+}
+
+// Create HQ (Headquarters)
+function createHQ(x, z, team) {
+    const group = new THREE.Group();
+    const isRed = team === 'red';
+    const color = isRed ? 0xcc3333 : 0x555555;
+    
+    // Main building
+    const bodyGeom = new THREE.BoxGeometry(5, 3, 5);
+    const bodyMat = new THREE.MeshLambertMaterial({ color });
+    const body = new THREE.Mesh(bodyGeom, bodyMat);
+    body.position.y = 1.5;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+    
+    // Roof
+    const roofGeom = new THREE.ConeGeometry(3.5, 1.5, 4);
+    const roofMat = new THREE.MeshLambertMaterial({ color: isRed ? 0x991111 : 0x333333 });
+    const roof = new THREE.Mesh(roofGeom, roofMat);
+    roof.position.y = 3.75;
+    roof.rotation.y = Math.PI / 4;
+    roof.castShadow = true;
+    group.add(roof);
+    
+    // Flag pole
+    const poleGeom = new THREE.CylinderGeometry(0.05, 0.05, 2, 8);
+    const poleMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+    const pole = new THREE.Mesh(poleGeom, poleMat);
+    pole.position.set(0, 4.5, 0);
+    group.add(pole);
+    
+    // Flag
+    const flagGeom = new THREE.PlaneGeometry(0.8, 0.5);
+    const flagMat = new THREE.MeshBasicMaterial({ color: isRed ? 0xff0000 : 0x888888, side: THREE.DoubleSide });
+    const flag = new THREE.Mesh(flagGeom, flagMat);
+    flag.position.set(0.4, 5, 0);
+    group.add(flag);
+    
+    // HP Bar background
+    const hpBarBgGeom = new THREE.PlaneGeometry(4, 0.3);
+    const hpBarBgMat = new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide });
+    const hpBarBg = new THREE.Mesh(hpBarBgGeom, hpBarBgMat);
+    hpBarBg.position.y = 3.5;
+    hpBarBg.rotation.x = -Math.PI / 4;
+    group.add(hpBarBg);
+    
+    // HP Bar
+    const hpBarGeom = new THREE.PlaneGeometry(4, 0.3);
+    const hpBarMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+    const hpBar = new THREE.Mesh(hpBarGeom, hpBarMat);
+    hpBar.position.y = 3.5;
+    hpBar.position.z = 0.001;
+    hpBar.rotation.x = -Math.PI / 4;
+    group.add(hpBar);
+    
+    group.position.set(x, 0, z);
+    
+    const structure = {
+        mesh: group,
+        type: 'hq',
+        team,
+        hp: HQ_HP,
+        maxHp: HQ_HP,
+        income: 0,
+        alive: true,
+        hpBar,
+        isHQ: true,
+        size: 3
+    };
+    
+    scene.add(group);
+    structures.push(structure);
+    return structure;
+}
+
+// Create Turret
+function createTurret(x, z, team) {
+    const group = new THREE.Group();
+    const isRed = team === 'red';
+    const color = isRed ? 0xcc3333 : 0x444444;
+    
+    // Base
+    const baseGeom = new THREE.CylinderGeometry(0.6, 0.8, 0.5, 8);
+    const baseMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+    const base = new THREE.Mesh(baseGeom, baseMat);
+    base.position.y = 0.25;
+    base.castShadow = true;
+    group.add(base);
+    
+    // Turret body
+    const bodyGeom = new THREE.CylinderGeometry(0.4, 0.5, 0.8, 8);
+    const bodyMat = new THREE.MeshLambertMaterial({ color });
+    const body = new THREE.Mesh(bodyGeom, bodyMat);
+    body.position.y = 0.9;
+    body.castShadow = true;
+    group.add(body);
+    
+    // Barrel
+    const barrelGeom = new THREE.CylinderGeometry(0.1, 0.1, 1, 8);
+    const barrelMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+    const barrel = new THREE.Mesh(barrelGeom, barrelMat);
+    barrel.position.set(0, 1, 0.5);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.castShadow = true;
+    group.add(barrel);
+    
+    // HP Bar background
+    const hpBarBgGeom = new THREE.PlaneGeometry(1.2, 0.1);
+    const hpBarBgMat = new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide });
+    const hpBarBg = new THREE.Mesh(hpBarBgGeom, hpBarBgMat);
+    hpBarBg.position.y = 1.8;
+    hpBarBg.rotation.x = -Math.PI / 4;
+    group.add(hpBarBg);
+    
+    // HP Bar
+    const hpBarGeom = new THREE.PlaneGeometry(1.2, 0.1);
+    const hpBarMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+    const hpBar = new THREE.Mesh(hpBarGeom, hpBarMat);
+    hpBar.position.y = 1.8;
+    hpBar.position.z = 0.001;
+    hpBar.rotation.x = -Math.PI / 4;
+    group.add(hpBar);
+    
+    group.position.set(x, 0, z);
+    
+    const structure = {
+        mesh: group,
+        type: 'turret',
+        team,
+        hp: TURRET_HP,
+        maxHp: TURRET_HP,
+        income: 0,
+        alive: true,
+        hpBar,
+        isTurret: true,
+        lastAttackTime: 0,
+        size: 1
+    };
+    
+    scene.add(group);
+    structures.push(structure);
+    return structure;
+}
+
+// Attack structure
+function attackStructure(unit, structure) {
+    if (!structure || !structure.alive) return false;
+    if (unit.canHeal) return false; // Medics don't attack
+    
+    const dist = unit.mesh.position.distanceTo(structure.mesh.position);
+    const attackRange = unit.attackRange || 2.5;
+    
+    if (dist <= attackRange) {
+        const now = Date.now();
+        if (now - unit.lastAttackTime >= unit.attackCooldown) {
+            structure.hp -= unit.damage;
+            unit.lastAttackTime = now;
+            
+            if (structure.hp <= 0) {
+                structure.alive = false;
+                scene.remove(structure.mesh);
+                const idx = structures.indexOf(structure);
+                if (idx !== -1) structures.splice(idx, 1);
+                
+                // Check if HQ destroyed
+                if (structure === playerHQ) {
+                    endGame(false);
+                } else if (structure === enemyHQ) {
+                    endGame(true);
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+// Buy unit
+function showQuiz() {
+    return new Promise((resolve) => {
+        const vocab = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+        const reward = QUIZ_REWARDS[vocab.difficulty];
+        const stars = '★'.repeat(vocab.difficulty) + '☆'.repeat(3 - vocab.difficulty);
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'quizModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a2e;
+            border: 2px solid #e94560;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 10000;
+            text-align: center;
+            color: white;
+            font-family: 'Courier New', monospace;
+            min-width: 300px;
+        `;
+        
+        modal.innerHTML = `
+            <h3 style="color: #e94560; margin-bottom: 10px;">Quiz Alemán</h3>
+            <p style="color: #ffd700; font-size: 16px; margin-bottom: 10px;">${stars}</p>
+            <p style="font-size: 18px; margin-bottom: 15px;">¿Qué significa "<b>${vocab.word}</b>" en español?</p>
+            <input type="text" id="quizAnswer" style="
+                width: 80%;
+                padding: 10px;
+                font-size: 16px;
+                border: 2px solid #e94560;
+                border-radius: 5px;
+                background: #16213e;
+                color: white;
+                text-align: center;
+                margin-bottom: 15px;
+            " placeholder="Escribe tu respuesta..." autofocus>
+            <br>
+            <button id="quizSubmit" style="
+                padding: 10px 30px;
+                font-size: 16px;
+                background: #e94560;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-right: 10px;
+            ">Enviar</button>
+            <button id="quizCancel" style="
+                padding: 10px 30px;
+                font-size: 16px;
+                background: #666;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            ">Cancelar</button>
+            <p style="font-size: 14px; color: #ffd700; margin-top: 10px;">+${reward} monedas si aciertas</p>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const input = document.getElementById('quizAnswer');
+        const submitBtn = document.getElementById('quizSubmit');
+        const cancelBtn = document.getElementById('quizCancel');
+        
+        input.focus();
+        
+        const cleanup = () => {
+            modal.remove();
+        };
+        
+        const checkAnswer = () => {
+            const userAnswer = input.value.trim().toLowerCase();
+            const expected = vocab.answer.toLowerCase();
+            const isCorrect = userAnswer === expected;
+            console.log('Quiz: user typed "' + userAnswer + '", expected "' + expected + '", match:', isCorrect);
+            
+            if (isCorrect) {
+                cleanup();
+                resolve({ correct: true, reward });
+            } else {
+                // Show correct answer
+                modal.innerHTML = `
+                    <h3 style="color: #e94560; margin-bottom: 15px;">❌ Incorrecto</h3>
+                    <p style="font-size: 16px; margin-bottom: 10px;">La palabra "<b>${vocab.word}</b>" significa:</p>
+                    <p style="font-size: 24px; color: #00ff00; margin-bottom: 15px;"><b>${vocab.answer}</b></p>
+                    <button id="quizClose" style="
+                        padding: 10px 30px;
+                        font-size: 16px;
+                        background: #e94560;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    ">OK</button>
+                `;
+                
+                document.getElementById('quizClose').onclick = () => {
+                    cleanup();
+                    resolve({ correct: false, reward: 0 });
+                };
+            }
+        };
+        
+        submitBtn.onclick = checkAnswer;
+        input.onkeypress = (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        };
+        cancelBtn.onclick = () => {
+            cleanup();
+            resolve({ correct: false, reward: 0 });
+        };
+    });
+}
+
+function calculateAngle(a, b, c) {
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    let degrees = Math.abs(radians * 180 / Math.PI);
+    if (degrees > 180) degrees = 360 - degrees;
+    return degrees;
+}
+
+function detectSquat(landmarks) {
+    const leftHip = landmarks[23];
+    const leftKnee = landmarks[25];
+    const leftAnkle = landmarks[27];
+    const rightHip = landmarks[24];
+    const rightKnee = landmarks[26];
+    const rightAnkle = landmarks[28];
+    
+    const leftKneeAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
+    const rightKneeAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
+    
+    return leftKneeAngle < 90 && rightKneeAngle < 90;
+}
+
+function detectPushUp(landmarks) {
+    const leftShoulder = landmarks[11];
+    const leftElbow = landmarks[13];
+    const leftWrist = landmarks[15];
+    const rightShoulder = landmarks[12];
+    const rightElbow = landmarks[14];
+    const rightWrist = landmarks[16];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    
+    const leftElbowAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
+    const rightElbowAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
+    
+    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    const hipY = (leftHip.y + rightHip.y) / 2;
+    const bodyHorizontal = Math.abs(shoulderY - hipY) < 0.15;
+    
+    return leftElbowAngle < 90 && rightElbowAngle < 90 && bodyHorizontal;
+}
+
+function detectPlank(landmarks) {
+    const leftShoulder = landmarks[11];
+    const leftHip = landmarks[23];
+    const leftAnkle = landmarks[27];
+    const rightShoulder = landmarks[12];
+    const rightHip = landmarks[24];
+    const rightAnkle = landmarks[28];
+    
+    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    const hipY = (leftHip.y + rightHip.y) / 2;
+    const ankleY = (leftAnkle.y + rightAnkle.y) / 2;
+    
+    const bodyStraight = Math.abs(shoulderY - hipY) < 0.1 && Math.abs(hipY - ankleY) < 0.15;
+    const armsStraight = leftShoulder.y < leftHip.y && rightShoulder.y < rightHip.y;
+    
+    return bodyStraight && armsStraight;
+}
+
+function showExercise() {
+    return new Promise((resolve) => {
+        const exercise = exercises[Math.floor(Math.random() * exercises.length)];
+        const reward = EXERCISE_REWARDS[exercise.difficulty];
+        const stars = '★'.repeat(exercise.difficulty) + '☆'.repeat(3 - exercise.difficulty);
+        
+        const modal = document.createElement('div');
+        modal.id = 'quizModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a2e;
+            border: 2px solid #00cc66;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 10000;
+            text-align: center;
+            color: white;
+            font-family: 'Courier New', monospace;
+            min-width: 400px;
+        `;
+        
+        modal.innerHTML = `
+            <h3 style="color: #00cc66; margin-bottom: 10px;">💪 Ejercicio</h3>
+            <p style="color: #ffd700; font-size: 16px; margin-bottom: 10px;">${stars}</p>
+            <p style="font-size: 18px; margin-bottom: 10px;"><b>${exercise.name}</b></p>
+            <p style="font-size: 12px; color: #888; margin-bottom: 10px;">${exercise.description}</p>
+            <div style="position: relative; display: inline-block;">
+                <video id="webcam" style="width: 320px; height: 240px; border-radius: 8px; transform: scaleX(-1);"></video>
+                <canvas id="poseCanvas" style="position: absolute; top: 0; left: 0; width: 320px; height: 240px; transform: scaleX(-1);"></canvas>
+            </div>
+            <p id="exerciseStatus" style="font-size: 16px; color: #00cc66; margin: 10px 0;">Esperando cámara...</p>
+            <p id="repCount" style="font-size: 24px; color: #ffd700; margin: 10px 0;">0 / ${exercise.difficulty === 1 ? 1 : exercise.difficulty === 2 ? 3 : exercise.difficulty === 3 ? 5 : exercise.difficulty}</p>
+            <button id="exerciseCancel" style="
+                padding: 10px 30px;
+                font-size: 16px;
+                background: #666;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            ">Cancelar</button>
+            <p style="font-size: 14px; color: #ffd700; margin-top: 10px;">+${reward} monedas</p>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('poseCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusEl = document.getElementById('exerciseStatus');
+        const repCountEl = document.getElementById('repCount');
+        
+        let reps = 0;
+        let wasDetected = false;
+        const requiredReps = exercise.difficulty === 1 ? 1 : exercise.difficulty === 2 ? 3 : 5;
+        
+        const cleanup = () => {
+            if (window.currentPoseCamera) {
+                window.currentPoseCamera.stop();
+                window.currentPoseCamera = null;
+            }
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            modal.remove();
+        };
+        
+        document.getElementById('exerciseCancel').onclick = () => {
+            cleanup();
+            resolve({ correct: false, reward: 0 });
+        };
+        
+        const pose = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+        
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        
+        pose.onResults((results) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (results.poseLandmarks) {
+                drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
+                drawLandmarks(ctx, results.poseLandmarks, { color: '#FF0000', lineWidth: 1, radius: 3 });
+                
+                let detected = false;
+                if (exercise.name.includes('Sentadilla')) {
+                    detected = detectSquat(results.poseLandmarks);
+                } else if (exercise.name.includes('Flexión')) {
+                    detected = detectPushUp(results.poseLandmarks);
+                } else if (exercise.name.includes('Plancha')) {
+                    detected = detectPlank(results.poseLandmarks);
+                }
+                
+                if (detected && !wasDetected) {
+                    reps++;
+                    repCountEl.textContent = `${reps} / ${requiredReps}`;
+                    
+                    if (reps >= requiredReps) {
+                        statusEl.textContent = '¡Completado!';
+                        statusEl.style.color = '#00ff00';
+                        setTimeout(() => {
+                            cleanup();
+                            resolve({ correct: true, reward });
+                        }, 1000);
+                    }
+                }
+                wasDetected = detected;
+                statusEl.textContent = detected ? '¡Detectado!' : 'Realiza el ejercicio...';
+                statusEl.style.color = detected ? '#00ff00' : '#ffd700';
+            }
+        });
+        
+        navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } })
+            .then((stream) => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    const camera = new Camera(video, {
+                        onFrame: async () => {
+                            await pose.send({ image: video });
+                        },
+                        width: 320,
+                        height: 240
+                    });
+                    window.currentPoseCamera = camera;
+                    camera.start();
+                    statusEl.textContent = 'Cámara activa - Realiza el ejercicio';
+                };
+            })
+            .catch((err) => {
+                statusEl.textContent = 'Error: No se pudo acceder a la cámara';
+                statusEl.style.color = '#ff6b6b';
+                console.error('Camera error:', err);
+            });
+    });
+}
+
+function showChallenge() {
+    if (gameMode === 'study') {
+        return showQuiz();
+    } else {
+        return showExercise();
+    }
+}
+
+function buyUnit(unitType) {
+    const config = UNIT_TYPES[unitType];
+    if (!config) return false;
+    
+    showChallenge().then(({ correct, reward }) => {
+        console.log('Quiz result:', correct, 'reward:', reward, 'for', unitType);
+        if (correct) {
+            money += reward;
+            updateMoneyUI();
+            
+            // Spawn unit
+            const spawnX = -HALF_GRID + 6 + Math.random() * 4;
+            const spawnZ = -HALF_GRID + 6 + Math.random() * 4;
+            const unit = createSoldier(spawnX, spawnZ, 'red', unitType);
+            selectUnit(unit);
+            console.log('Unit created:', unitType);
+        }
+    });
+    
+    return true;
+}
+
+// Enter build mode
+function enterBuildMode(type) {
+    const config = STRUCTURE_TYPES[type];
+    if (!config) return false;
+    
+    showChallenge().then(({ correct, reward }) => {
+        if (correct) {
+            money += reward;
+            updateMoneyUI();
+            
+            buildMode = type;
+            
+            // Create preview
+            const previewGeom = new THREE.BoxGeometry(
+                config.size * CELL_SIZE * 0.9,
+                0.5,
+                config.size * CELL_SIZE * 0.9
+            );
+            const previewMat = new THREE.MeshBasicMaterial({
+                color: config.color,
+                transparent: true,
+                opacity: 0.5
+            });
+            buildPreview = new THREE.Mesh(previewGeom, previewMat);
+            buildPreview.position.y = 0.25;
+            buildPreview.visible = false;
+            scene.add(buildPreview);
+            
+            document.getElementById('build-info').textContent = `Construyendo: ${config.name} - Click para colocar, ESC cancelar`;
+        }
+    });
+    
+    return true;
+}
+
+// Exit build mode
+function exitBuildMode() {
+    buildMode = null;
+    if (buildPreview) {
+        scene.remove(buildPreview);
+        buildPreview = null;
+    }
+    document.getElementById('build-info').textContent = 'Selecciona una estructura para construir';
+}
+
+// Place structure
+function placeStructure(gx, gz) {
+    if (!buildMode) return false;
+    
+    const config = STRUCTURE_TYPES[buildMode];
+    if (!config || !canAfford(config.cost)) return false;
+    
+    // Check if cell is free
+    const size = config.size;
+    for (let dx = 0; dx < size; dx++) {
+        for (let dz = 0; dz < size; dz++) {
+            if (!isValidCell(gx + dx, gz + dz)) return false;
+            // Check for existing structures
+            if (structures.some(s => s.alive &&
+                gx + dx >= s.gx && gx + dx < s.gx + s.size &&
+                gz + dz >= s.gz && gz + dz < s.gz + s.size)) {
+                return false;
+            }
+        }
+    }
+    
+    if (spendMoney(config.cost)) {
+        createStructure(buildMode, gx, gz, 'red');
+        exitBuildMode();
+        return true;
+    }
+    return false;
+}
+
 let lastTime = 0;
 function animate(time = 0) {
     requestAnimationFrame(animate);
@@ -961,6 +1953,34 @@ function animate(time = 0) {
 
     if (!gameOver) {
         updateWaves(dt);
+        generateIncome();
+
+        // Turret attack logic
+        structures.forEach(s => {
+            if (!s.alive || !s.isTurret) return;
+            const now = Date.now();
+            if (now - s.lastAttackTime < TURRET_COOLDOWN) return;
+            
+            // Find nearest enemy unit
+            let nearestEnemy = null;
+            let minDist = TURRET_RANGE;
+            for (const u of units) {
+                if (!u.alive || u.team === s.team) continue;
+                const dist = s.mesh.position.distanceTo(u.mesh.position);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearestEnemy = u;
+                }
+            }
+            
+            if (nearestEnemy) {
+                nearestEnemy.hp -= TURRET_DAMAGE;
+                s.lastAttackTime = now;
+                if (nearestEnemy.hp <= 0) {
+                    killUnit(nearestEnemy);
+                }
+            }
+        });
 
         units.forEach(u => {
             if (u.alive) moveUnit(u, dt);
@@ -970,12 +1990,43 @@ function animate(time = 0) {
             if (u.alive) animateUnit(u, dt);
         });
 
+        // Enemy units attack HQ when nearby
+        units.forEach(u => {
+            if (!u.alive || u.team !== 'gray') return;
+            
+            // Check if near player HQ
+            if (playerHQ && playerHQ.alive) {
+                const dist = u.mesh.position.distanceTo(playerHQ.mesh.position);
+                if (dist <= u.attackRange) {
+                    const now = Date.now();
+                    if (now - u.lastAttackTime >= u.attackCooldown) {
+                        playerHQ.hp -= u.damage;
+                        u.lastAttackTime = now;
+                        if (playerHQ.hp <= 0) {
+                            playerHQ.alive = false;
+                            scene.remove(playerHQ.mesh);
+                        }
+                    }
+                }
+            }
+        });
+
         units.forEach(u => {
             if (u.alive && u.hp < u.maxHp) {
                 const ratio = u.hp / u.maxHp;
                 u.hpBar.scale.x = ratio;
                 u.hpBar.position.x = -(1 - ratio) * 0.3;
                 u.hpBar.material.color.setHex(ratio > 0.5 ? 0x00ff00 : ratio > 0.25 ? 0xffff00 : 0xff0000);
+            }
+        });
+
+        // Update structure HP bars
+        structures.forEach(s => {
+            if (s.alive && s.hp < s.maxHp) {
+                const ratio = s.hp / s.maxHp;
+                s.hpBar.scale.x = ratio;
+                s.hpBar.position.x = -(1 - ratio) * 0.4;
+                s.hpBar.material.color.setHex(ratio > 0.5 ? 0x00ff00 : ratio > 0.25 ? 0xffff00 : 0xff0000);
             }
         });
 

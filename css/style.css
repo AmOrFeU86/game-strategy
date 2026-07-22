@@ -53,6 +53,86 @@ body {
     color: #aaa;
 }
 
+#money-display {
+    color: #ffd700;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#buy-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 12px 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 10;
+}
+
+.buy-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-title {
+    color: #888;
+    font-size: 12px;
+    margin-right: 4px;
+}
+
+.buy-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 60px;
+}
+
+.buy-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.buy-btn.active {
+    background: rgba(78, 205, 196, 0.3);
+    border-color: #4ecdc4;
+}
+
+.buy-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    font-size: 24px;
+}
+
+.btn-cost {
+    color: #ffd700;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+#build-info {
+    color: #888;
+    font-size: 12px;
+    align-self: center;
+    padding-left: 10px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 #message {
     position: fixed;
     top: 50%;
@@ -85,4 +165,63 @@ body {
     pointer-events: none;
     display: none;
     z-index: 5;
+}
+
+#mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-right: 15px;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    margin-right: 5px;
+}
+
+.mode-label {
+    color: #888;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.toggle {
+    position: relative;
+    width: 50px;
+    height: 26px;
+}
+
+.toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e94560;
+    transition: 0.3s;
+    border-radius: 26px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #00cc66;
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
 }

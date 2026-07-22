@@ -9,11 +9,59 @@
 <body>
     <div id="ui">
         <div id="stats">
+            <span id="money-display">💰 100</span>
             <span id="red-count">Rojos: 5</span>
             <span id="gray-count">Grises: 5</span>
         </div>
         <div id="message"></div>
     </div>
+    
+    <div id="buy-panel">
+        <div id="mode-toggle">
+            <span class="mode-label">📖 Estudio</span>
+            <label class="toggle">
+                <input type="checkbox" id="mode-switch">
+                <span class="slider"></span>
+            </label>
+            <span class="mode-label">💪 Ejercicio</span>
+        </div>
+        <div class="buy-section">
+            <span class="section-title">Unidades:</span>
+            <button class="buy-btn" data-type="soldier" title="Soldado (30)">
+                <span class="btn-icon">⚔️</span>
+                <span class="btn-cost">30</span>
+            </button>
+            <button class="buy-btn" data-type="tank" title="Tanque (100)">
+                <span class="btn-icon">🛡️</span>
+                <span class="btn-cost">100</span>
+            </button>
+            <button class="buy-btn" data-type="sniper" title="Francotirador (75)">
+                <span class="btn-icon">🎯</span>
+                <span class="btn-cost">75</span>
+            </button>
+            <button class="buy-btn" data-type="medic" title="Médico (50)">
+                <span class="btn-icon">💊</span>
+                <span class="btn-cost">50</span>
+            </button>
+        </div>
+        <div class="buy-section">
+            <span class="section-title">Estructuras:</span>
+            <button class="buy-btn" data-type="wall" title="Muro (20)">
+                <span class="btn-icon">🧱</span>
+                <span class="btn-cost">20</span>
+            </button>
+            <button class="buy-btn" data-type="mine" title="Mina (50)">
+                <span class="btn-icon">⛏️</span>
+                <span class="btn-cost">50</span>
+            </button>
+            <button class="buy-btn" data-type="refinery" title="Refinería (150)">
+                <span class="btn-icon">🏭</span>
+                <span class="btn-cost">150</span>
+            </button>
+        </div>
+        <div id="build-info">Selecciona una estructura para construir</div>
+    </div>
+    
     <div id="selection-box"></div>
     <canvas id="game-canvas"></canvas>
     <script type="importmap">
@@ -23,6 +71,9 @@
         }
     }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script type="module" src="js/game.js"></script>
 </body>
 </html>
