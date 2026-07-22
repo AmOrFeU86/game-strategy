@@ -1194,13 +1194,13 @@ function setupEventListeners() {
             }
         }
         // Number keys for quick buy
-        if (e.key === '1') buyUnit('soldier');
-        if (e.key === '2') buyUnit('tank');
-        if (e.key === '3') buyUnit('sniper');
-        if (e.key === '4') buyUnit('medic');
-        if (e.key === '5') enterBuildMode('wall');
-        if (e.key === '6') enterBuildMode('mine');
-        if (e.key === '7') enterBuildMode('refinery');
+        if (e.key === '1') { e.preventDefault(); buyUnit('soldier'); }
+        if (e.key === '2') { e.preventDefault(); buyUnit('tank'); }
+        if (e.key === '3') { e.preventDefault(); buyUnit('sniper'); }
+        if (e.key === '4') { e.preventDefault(); buyUnit('medic'); }
+        if (e.key === '5') { e.preventDefault(); enterBuildMode('wall'); }
+        if (e.key === '6') { e.preventDefault(); enterBuildMode('mine'); }
+        if (e.key === '7') { e.preventDefault(); enterBuildMode('refinery'); }
     });
 
     // Mode toggle
