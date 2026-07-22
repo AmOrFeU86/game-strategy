@@ -25,20 +25,9 @@ let gameMode = 'study';
 // Exercise rewards
 const EXERCISE_REWARDS = { 1: 10, 2: 25, 3: 50 };
 const exercises = [
-    // Level 1 - Easy (10 coins)
     { name: '1 Sentadilla', description: 'Haz 1 sentadilla', difficulty: 1 },
     { name: '1 Flexión', description: 'Haz 1 flexión', difficulty: 1 },
-    { name: '5 Segundos Plancha', description: 'Mantén la plancha 5 segundos', difficulty: 1 },
-    
-    // Level 2 - Medium (25 coins)
-    { name: '3 Sentadillas', description: 'Haz 3 sentadillas', difficulty: 2 },
-    { name: '3 Flexiones', description: 'Haz 3 flexiones', difficulty: 2 },
-    { name: '10 Segundos Plancha', description: 'Mantén la plancha 10 segundos', difficulty: 2 },
-    
-    // Level 3 - Hard (50 coins)
-    { name: '5 Sentadillas', description: 'Haz 5 sentadillas', difficulty: 3 },
-    { name: '5 Flexiones', description: 'Haz 5 flexiones', difficulty: 3 },
-    { name: '20 Segundos Plancha', description: 'Mantén la plancha 20 segundos', difficulty: 3 }
+    { name: '5 Segundos Plancha', description: 'Mantén la plancha 5 segundos', difficulty: 1 }
 ];
 
 // German Vocabulary Quiz
