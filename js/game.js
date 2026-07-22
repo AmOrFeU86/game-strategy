@@ -25,9 +25,10 @@ let gameMode = 'study';
 // Exercise rewards
 const EXERCISE_REWARDS = { 1: 10, 2: 25, 3: 50 };
 const exercises = [
-    { name: '1 Sentadilla', description: 'Haz 1 sentadilla', difficulty: 1 },
-    { name: '1 Flexión', description: 'Haz 1 flexión', difficulty: 1 },
-    { name: '5 Segundos Plancha', description: 'Mantén la plancha 5 segundos', difficulty: 1 }
+    { name: '1 Sentadilla', description: 'Haz 1 sentadilla', difficulty: 1, type: 'reps' },
+    { name: '1 Flexión', description: 'Haz 1 flexión', difficulty: 1, type: 'reps' },
+    { name: '5 Segundos Plancha', description: 'Mantén la plancha 5 segundos', difficulty: 1, type: 'timer' },
+    { name: '10 Segundos Elíptica', description: 'En la elíptica 10 segundos', difficulty: 1, type: 'timer' }
 ];
 
 // German Vocabulary Quiz
@@ -1660,70 +1661,13 @@ function showQuiz() {
     });
 }
 
-function calculateAngle(a, b, c) {
-    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-    let degrees = Math.abs(radians * 180 / Math.PI);
-    if (degrees > 180) degrees = 360 - degrees;
-    return degrees;
-}
-
-function detectSquat(landmarks) {
-    const leftHip = landmarks[23];
-    const leftKnee = landmarks[25];
-    const leftAnkle = landmarks[27];
-    const rightHip = landmarks[24];
-    const rightKnee = landmarks[26];
-    const rightAnkle = landmarks[28];
-    
-    const leftKneeAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-    const rightKneeAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
-    
-    return leftKneeAngle < 90 && rightKneeAngle < 90;
-}
-
-function detectPushUp(landmarks) {
-    const leftShoulder = landmarks[11];
-    const leftElbow = landmarks[13];
-    const leftWrist = landmarks[15];
-    const rightShoulder = landmarks[12];
-    const rightElbow = landmarks[14];
-    const rightWrist = landmarks[16];
-    const leftHip = landmarks[23];
-    const rightHip = landmarks[24];
-    
-    const leftElbowAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-    const rightElbowAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
-    
-    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-    const hipY = (leftHip.y + rightHip.y) / 2;
-    const bodyHorizontal = Math.abs(shoulderY - hipY) < 0.15;
-    
-    return leftElbowAngle < 90 && rightElbowAngle < 90 && bodyHorizontal;
-}
-
-function detectPlank(landmarks) {
-    const leftShoulder = landmarks[11];
-    const leftHip = landmarks[23];
-    const leftAnkle = landmarks[27];
-    const rightShoulder = landmarks[12];
-    const rightHip = landmarks[24];
-    const rightAnkle = landmarks[28];
-    
-    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-    const hipY = (leftHip.y + rightHip.y) / 2;
-    const ankleY = (leftAnkle.y + rightAnkle.y) / 2;
-    
-    const bodyStraight = Math.abs(shoulderY - hipY) < 0.1 && Math.abs(hipY - ankleY) < 0.15;
-    const armsStraight = leftShoulder.y < leftHip.y && rightShoulder.y < rightHip.y;
-    
-    return bodyStraight && armsStraight;
-}
-
 function showExercise() {
     return new Promise((resolve) => {
         const exercise = exercises[Math.floor(Math.random() * exercises.length)];
         const reward = EXERCISE_REWARDS[exercise.difficulty];
         const stars = '★'.repeat(exercise.difficulty) + '☆'.repeat(3 - exercise.difficulty);
+        const isTimer = exercise.type === 'timer';
+        const timerSeconds = isTimer ? parseInt(exercise.name.match(/\d+/)[0]) : 0;
         
         const modal = document.createElement('div');
         modal.id = 'quizModal';
@@ -1740,132 +1684,78 @@ function showExercise() {
             text-align: center;
             color: white;
             font-family: 'Courier New', monospace;
-            min-width: 400px;
+            min-width: 300px;
         `;
         
         modal.innerHTML = `
             <h3 style="color: #00cc66; margin-bottom: 10px;">💪 Ejercicio</h3>
             <p style="color: #ffd700; font-size: 16px; margin-bottom: 10px;">${stars}</p>
-            <p style="font-size: 18px; margin-bottom: 10px;"><b>${exercise.name}</b></p>
-            <p style="font-size: 12px; color: #888; margin-bottom: 10px;">${exercise.description}</p>
-            <div style="position: relative; display: inline-block;">
-                <video id="webcam" style="width: 320px; height: 240px; border-radius: 8px; transform: scaleX(-1);"></video>
-                <canvas id="poseCanvas" style="position: absolute; top: 0; left: 0; width: 320px; height: 240px; transform: scaleX(-1);"></canvas>
-            </div>
-            <p id="exerciseStatus" style="font-size: 16px; color: #00cc66; margin: 10px 0;">Esperando cámara...</p>
-            <p id="repCount" style="font-size: 24px; color: #ffd700; margin: 10px 0;">0 / ${exercise.difficulty === 1 ? 1 : exercise.difficulty === 2 ? 3 : exercise.difficulty === 3 ? 5 : exercise.difficulty}</p>
+            <p style="font-size: 20px; margin-bottom: 10px;"><b>${exercise.name}</b></p>
+            <p style="font-size: 14px; color: #888; margin-bottom: 15px;">${exercise.description}</p>
+            ${isTimer ? `<p id="timerDisplay" style="font-size: 48px; color: #00cc66; margin: 15px 0;">${timerSeconds}s</p>` : ''}
+            <button id="exerciseDone" style="
+                padding: 12px 40px;
+                font-size: 18px;
+                background: #00cc66;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-right: 10px;
+            ">¡Hecho!</button>
             <button id="exerciseCancel" style="
-                padding: 10px 30px;
-                font-size: 16px;
+                padding: 12px 40px;
+                font-size: 18px;
                 background: #666;
                 color: white;
                 border: none;
                 border-radius: 5px;
                 cursor: pointer;
             ">Cancelar</button>
-            <p style="font-size: 14px; color: #ffd700; margin-top: 10px;">+${reward} monedas</p>
+            <p style="font-size: 14px; color: #ffd700; margin-top: 15px;">+${reward} monedas</p>
         `;
         
         document.body.appendChild(modal);
         
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('poseCanvas');
-        const ctx = canvas.getContext('2d');
-        const statusEl = document.getElementById('exerciseStatus');
-        const repCountEl = document.getElementById('repCount');
+        const doneBtn = document.getElementById('exerciseDone');
+        const cancelBtn = document.getElementById('exerciseCancel');
+        const timerDisplay = document.getElementById('timerDisplay');
         
-        let reps = 0;
-        let wasDetected = false;
-        const requiredReps = exercise.difficulty === 1 ? 1 : exercise.difficulty === 2 ? 3 : 5;
+        let timerInterval = null;
+        let timeLeft = timerSeconds;
         
         const cleanup = () => {
-            if (window.currentPoseCamera) {
-                window.currentPoseCamera.stop();
-                window.currentPoseCamera = null;
-            }
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-            }
+            if (timerInterval) clearInterval(timerInterval);
             modal.remove();
         };
         
-        document.getElementById('exerciseCancel').onclick = () => {
+        if (isTimer) {
+            doneBtn.disabled = true;
+            doneBtn.style.opacity = '0.5';
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `${timeLeft}s`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = '¡Tiempo!';
+                    timerDisplay.style.color = '#ffd700';
+                    doneBtn.disabled = false;
+                    doneBtn.style.opacity = '1';
+                }
+            }, 1000);
+        }
+        
+        doneBtn.onclick = () => {
+            cleanup();
+            resolve({ correct: true, reward });
+        };
+        
+        cancelBtn.onclick = () => {
             cleanup();
             resolve({ correct: false, reward: 0 });
         };
-        
-        const pose = new Pose({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-        });
-        
-        pose.setOptions({
-            modelComplexity: 1,
-            smoothLandmarks: true,
-            enableSegmentation: false,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
-        
-        pose.onResults((results) => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (results.poseLandmarks) {
-                drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
-                drawLandmarks(ctx, results.poseLandmarks, { color: '#FF0000', lineWidth: 1, radius: 3 });
-                
-                let detected = false;
-                if (exercise.name.includes('Sentadilla')) {
-                    detected = detectSquat(results.poseLandmarks);
-                } else if (exercise.name.includes('Flexión')) {
-                    detected = detectPushUp(results.poseLandmarks);
-                } else if (exercise.name.includes('Plancha')) {
-                    detected = detectPlank(results.poseLandmarks);
-                }
-                
-                if (detected && !wasDetected) {
-                    reps++;
-                    repCountEl.textContent = `${reps} / ${requiredReps}`;
-                    
-                    if (reps >= requiredReps) {
-                        statusEl.textContent = '¡Completado!';
-                        statusEl.style.color = '#00ff00';
-                        setTimeout(() => {
-                            cleanup();
-                            resolve({ correct: true, reward });
-                        }, 1000);
-                    }
-                }
-                wasDetected = detected;
-                statusEl.textContent = detected ? '¡Detectado!' : 'Realiza el ejercicio...';
-                statusEl.style.color = detected ? '#00ff00' : '#ffd700';
-            }
-        });
-        
-        navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } })
-            .then((stream) => {
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    
-                    const camera = new Camera(video, {
-                        onFrame: async () => {
-                            await pose.send({ image: video });
-                        },
-                        width: 320,
-                        height: 240
-                    });
-                    window.currentPoseCamera = camera;
-                    camera.start();
-                    statusEl.textContent = 'Cámara activa - Realiza el ejercicio';
-                };
-            })
-            .catch((err) => {
-                statusEl.textContent = 'Error: No se pudo acceder a la cámara';
-                statusEl.style.color = '#ff6b6b';
-                console.error('Camera error:', err);
-            });
     });
 }
 
