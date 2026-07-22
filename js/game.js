@@ -33,7 +33,11 @@ const exercises = [
 
 // German Vocabulary Quiz
 const QUIZ_REWARDS = { 1: 5, 2: 15, 3: 30 };
-const wrongAnswers = {};
+const wrongAnswers = JSON.parse(localStorage.getItem('wrongAnswers') || '{}');
+
+function saveWrongAnswers() {
+    localStorage.setItem('wrongAnswers', JSON.stringify(wrongAnswers));
+}
 
 const vocabulary = [
     // Level 1 - Basic (5 coins)
@@ -1609,12 +1613,14 @@ function showQuiz() {
                 // Decrease wrong count if exists
                 if (wrongAnswers[vocab.word] > 0) {
                     wrongAnswers[vocab.word]--;
+                    saveWrongAnswers();
                 }
                 cleanup();
                 resolve({ correct: true, reward });
             } else {
                 // Track wrong answer
                 wrongAnswers[vocab.word] = (wrongAnswers[vocab.word] || 0) + 1;
+                saveWrongAnswers();
                 
                 // Show correct answer
                 modal.innerHTML = `
