@@ -32,6 +32,8 @@ const exercises = [
 
 // German Vocabulary Quiz
 const QUIZ_REWARDS = { 1: 5, 2: 15, 3: 30 };
+const wrongAnswers = {};
+
 const vocabulary = [
     // Level 1 - Basic (5 coins)
     { word: 'Haus', answer: 'casa', difficulty: 1 },
@@ -78,6 +80,18 @@ const vocabulary = [
     { word: 'Blume', answer: 'flor', difficulty: 3 },
     { word: 'Schmetterling', answer: 'mariposa', difficulty: 3 }
 ];
+
+function getRandomVocab() {
+    // 50% chance to pick a word the user got wrong
+    const wrongWords = Object.keys(wrongAnswers).filter(w => wrongAnswers[w] > 0);
+    
+    if (wrongWords.length > 0 && Math.random() < 0.5) {
+        const word = wrongWords[Math.floor(Math.random() * wrongWords.length)];
+        return vocabulary.find(v => v.word === word);
+    }
+    
+    return vocabulary[Math.floor(Math.random() * vocabulary.length)];
+}
 
 // HQ and Turrets
 const HQ_HP = 50;
@@ -1503,9 +1517,15 @@ function attackStructure(unit, structure) {
 // Buy unit
 function showQuiz() {
     return new Promise((resolve) => {
-        const vocab = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+        const vocab = getRandomVocab();
         const reward = QUIZ_REWARDS[vocab.difficulty];
         const stars = '★'.repeat(vocab.difficulty) + '☆'.repeat(3 - vocab.difficulty);
+        
+        // Random direction: true = German→Spanish, false = Spanish→German
+        const isGermanToSpanish = Math.random() < 0.5;
+        const questionWord = isGermanToSpanish ? vocab.word : vocab.answer;
+        const expectedAnswer = isGermanToSpanish ? vocab.answer : vocab.word;
+        const directionText = isGermanToSpanish ? 'español' : 'alemán';
         
         // Create modal
         const modal = document.createElement('div');
@@ -1528,8 +1548,9 @@ function showQuiz() {
         
         modal.innerHTML = `
             <h3 style="color: #e94560; margin-bottom: 10px;">Quiz Alemán</h3>
+            <p style="color: #888; font-size: 12px; margin-bottom: 5px;">${isGermanToSpanish ? '🇩🇪 → 🇪🇸' : '🇪🇸 → 🇩🇪'}</p>
             <p style="color: #ffd700; font-size: 16px; margin-bottom: 10px;">${stars}</p>
-            <p style="font-size: 18px; margin-bottom: 15px;">¿Qué significa "<b>${vocab.word}</b>" en español?</p>
+            <p style="font-size: 18px; margin-bottom: 15px;">¿Qué significa "<b>${questionWord}</b>" en ${directionText}?</p>
             <input type="text" id="quizAnswer" style="
                 width: 80%;
                 padding: 10px;
@@ -1578,14 +1599,21 @@ function showQuiz() {
         
         const checkAnswer = () => {
             const userAnswer = input.value.trim().toLowerCase();
-            const expected = vocab.answer.toLowerCase();
+            const expected = expectedAnswer.toLowerCase();
             const isCorrect = userAnswer === expected;
             console.log('Quiz: user typed "' + userAnswer + '", expected "' + expected + '", match:', isCorrect);
             
             if (isCorrect) {
+                // Decrease wrong count if exists
+                if (wrongAnswers[vocab.word] > 0) {
+                    wrongAnswers[vocab.word]--;
+                }
                 cleanup();
                 resolve({ correct: true, reward });
             } else {
+                // Track wrong answer
+                wrongAnswers[vocab.word] = (wrongAnswers[vocab.word] || 0) + 1;
+                
                 // Show correct answer
                 modal.innerHTML = `
                     <h3 style="color: #e94560; margin-bottom: 15px;">❌ Incorrecto</h3>
@@ -1602,10 +1630,21 @@ function showQuiz() {
                     ">OK</button>
                 `;
                 
-                document.getElementById('quizClose').onclick = () => {
+                const closeBtn = document.getElementById('quizClose');
+                closeBtn.onclick = () => {
                     cleanup();
                     resolve({ correct: false, reward: 0 });
                 };
+                
+                // Allow Enter or Escape to close
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Enter' || e.key === 'Escape') {
+                        document.removeEventListener('keydown', handleKeyPress);
+                        cleanup();
+                        resolve({ correct: false, reward: 0 });
+                    }
+                };
+                document.addEventListener('keydown', handleKeyPress);
             }
         };
         
