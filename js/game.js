@@ -1183,6 +1183,9 @@ function setupEventListeners() {
     });
 
     window.addEventListener('keydown', (e) => {
+        // Don't trigger shortcuts if quiz modal is open
+        if (document.getElementById('quizModal')) return;
+        
         if (e.key === 'Escape') {
             if (buildMode) {
                 exitBuildMode();
@@ -1521,11 +1524,9 @@ function showQuiz() {
         const reward = QUIZ_REWARDS[vocab.difficulty];
         const stars = '★'.repeat(vocab.difficulty) + '☆'.repeat(3 - vocab.difficulty);
         
-        // Random direction: true = German→Spanish, false = Spanish→German
-        const isGermanToSpanish = Math.random() < 0.5;
-        const questionWord = isGermanToSpanish ? vocab.word : vocab.answer;
-        const expectedAnswer = isGermanToSpanish ? vocab.answer : vocab.word;
-        const directionText = isGermanToSpanish ? 'español' : 'alemán';
+        // Always German → Spanish
+        const questionWord = vocab.word;
+        const expectedAnswer = vocab.answer;
         
         // Create modal
         const modal = document.createElement('div');
@@ -1548,9 +1549,9 @@ function showQuiz() {
         
         modal.innerHTML = `
             <h3 style="color: #e94560; margin-bottom: 10px;">Quiz Alemán</h3>
-            <p style="color: #888; font-size: 12px; margin-bottom: 5px;">${isGermanToSpanish ? '🇩🇪 → 🇪🇸' : '🇪🇸 → 🇩🇪'}</p>
+            <p style="color: #888; font-size: 12px; margin-bottom: 5px;">🇩🇪 → 🇪🇸</p>
             <p style="color: #ffd700; font-size: 16px; margin-bottom: 10px;">${stars}</p>
-            <p style="font-size: 18px; margin-bottom: 15px;">¿Qué significa "<b>${questionWord}</b>" en ${directionText}?</p>
+            <p style="font-size: 18px; margin-bottom: 15px;">¿Qué significa "<b>${questionWord}</b>" en español?</p>
             <input type="text" id="quizAnswer" style="
                 width: 80%;
                 padding: 10px;
