@@ -14,6 +14,56 @@ const WAVE_BASE_COUNT = 3;
 const WAVE_GROWTH = 2;
 const SUBGROUP_DELAY = 800;
 
+// Unit type configurations
+const UNIT_TYPES = {
+    soldier: {
+        name: 'Soldado',
+        hp: 3,
+        speed: 8,
+        damage: 1,
+        attackRange: 2.5,
+        attackCooldown: 1000,
+        scale: 1.0,
+        color: 0xcc3333,
+        canHeal: false
+    },
+    tank: {
+        name: 'Tanque',
+        hp: 8,
+        speed: 4,
+        damage: 2,
+        attackRange: 2.0,
+        attackCooldown: 1500,
+        scale: 1.4,
+        color: 0x8b4513,
+        canHeal: false
+    },
+    sniper: {
+        name: 'Francotirador',
+        hp: 2,
+        speed: 6,
+        damage: 3,
+        attackRange: 6.0,
+        attackCooldown: 2000,
+        scale: 0.9,
+        color: 0x2e8b57,
+        canHeal: false
+    },
+    medic: {
+        name: 'Médico',
+        hp: 2,
+        speed: 7,
+        damage: 0,
+        attackRange: 3.0,
+        attackCooldown: 1000,
+        scale: 0.95,
+        color: 0xffffff,
+        canHeal: true,
+        healAmount: 1,
+        healCooldown: 2000
+    }
+};
+
 let scene, camera, renderer, raycaster, mouse;
 let ground;
 let units = [];
@@ -101,87 +151,132 @@ function createGround() {
     }
 }
 
-function createSoldier(x, z, team) {
+function createSoldier(x, z, team, unitType = 'soldier') {
     const group = new THREE.Group();
     const isRed = team === 'red';
+    const typeConfig = UNIT_TYPES[unitType];
+    const scale = typeConfig.scale;
 
-    // Body colors
-    const bodyColor = isRed ? 0xcc3333 : 0x556b2f;
+    // Body colors based on type
+    let bodyColor, helmetColor;
+    if (unitType === 'tank') {
+        bodyColor = isRed ? 0x8b2500 : 0x3d3d3d;
+        helmetColor = isRed ? 0x6b1c00 : 0x2d2d2d;
+    } else if (unitType === 'sniper') {
+        bodyColor = isRed ? 0x228b22 : 0x2e572e;
+        helmetColor = isRed ? 0x1a6b1a : 0x1d3d1d;
+    } else if (unitType === 'medic') {
+        bodyColor = isRed ? 0xcc3333 : 0xffffff;
+        helmetColor = isRed ? 0xaa2222 : 0xdddddd;
+    } else {
+        bodyColor = isRed ? 0xcc3333 : 0x556b2f;
+        helmetColor = isRed ? 0x993333 : 0x3d5c3d;
+    }
     const skinColor = isRed ? 0xffccaa : 0xddb899;
     const bootColor = isRed ? 0x8b4513 : 0x3d2b1f;
-    const helmetColor = isRed ? 0x993333 : 0x3d5c3d;
     const gunColor = 0x222222;
 
     // Body (torso)
-    const bodyGeom = new THREE.BoxGeometry(0.35, 0.45, 0.25);
+    const bodyGeom = new THREE.BoxGeometry(0.35 * scale, 0.45 * scale, 0.25 * scale);
     const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor });
     const body = new THREE.Mesh(bodyGeom, bodyMat);
-    body.position.y = 0.72;
+    body.position.y = 0.72 * scale;
     body.castShadow = true;
     group.add(body);
 
     // Head
-    const headGeom = new THREE.SphereGeometry(0.14, 8, 8);
+    const headGeom = new THREE.SphereGeometry(0.14 * scale, 8, 8);
     const headMat = new THREE.MeshLambertMaterial({ color: skinColor });
     const head = new THREE.Mesh(headGeom, headMat);
-    head.position.y = 1.12;
+    head.position.y = 1.12 * scale;
     head.castShadow = true;
     group.add(head);
 
     // Helmet
-    const helmetGeom = new THREE.SphereGeometry(0.17, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.6);
+    const helmetGeom = new THREE.SphereGeometry(0.17 * scale, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.6);
     const helmetMat = new THREE.MeshLambertMaterial({ color: helmetColor });
     const helmet = new THREE.Mesh(helmetGeom, helmetMat);
-    helmet.position.y = 1.18;
+    helmet.position.y = 1.18 * scale;
     helmet.castShadow = true;
     group.add(helmet);
 
     // Left Arm
-    const armGeom = new THREE.BoxGeometry(0.12, 0.35, 0.12);
+    const armGeom = new THREE.BoxGeometry(0.12 * scale, 0.35 * scale, 0.12 * scale);
     const leftArm = new THREE.Mesh(armGeom, bodyMat);
-    leftArm.position.set(-0.28, 0.7, 0);
+    leftArm.position.set(-0.28 * scale, 0.7 * scale, 0);
     leftArm.castShadow = true;
     group.add(leftArm);
 
     // Right Arm
     const rightArm = new THREE.Mesh(armGeom, bodyMat);
-    rightArm.position.set(0.28, 0.7, 0);
+    rightArm.position.set(0.28 * scale, 0.7 * scale, 0);
     rightArm.castShadow = true;
     group.add(rightArm);
 
     // Left Leg
-    const legGeom = new THREE.BoxGeometry(0.13, 0.35, 0.13);
-    const bootGeom = new THREE.BoxGeometry(0.14, 0.12, 0.18);
+    const legGeom = new THREE.BoxGeometry(0.13 * scale, 0.35 * scale, 0.13 * scale);
+    const bootGeom = new THREE.BoxGeometry(0.14 * scale, 0.12 * scale, 0.18 * scale);
     const leftLeg = new THREE.Mesh(legGeom, new THREE.MeshLambertMaterial({ color: bodyColor }));
-    leftLeg.position.set(-0.1, 0.25, 0);
+    leftLeg.position.set(-0.1 * scale, 0.25 * scale, 0);
     leftLeg.castShadow = true;
     group.add(leftLeg);
     const leftBoot = new THREE.Mesh(bootGeom, new THREE.MeshLambertMaterial({ color: bootColor }));
-    leftBoot.position.set(-0.1, 0.06, 0.02);
+    leftBoot.position.set(-0.1 * scale, 0.06 * scale, 0.02);
     leftBoot.castShadow = true;
     group.add(leftBoot);
 
     // Right Leg
     const rightLeg = new THREE.Mesh(legGeom, new THREE.MeshLambertMaterial({ color: bodyColor }));
-    rightLeg.position.set(0.1, 0.25, 0);
+    rightLeg.position.set(0.1 * scale, 0.25 * scale, 0);
     rightLeg.castShadow = true;
     group.add(rightLeg);
     const rightBoot = new THREE.Mesh(bootGeom, new THREE.MeshLambertMaterial({ color: bootColor }));
-    rightBoot.position.set(0.1, 0.06, 0.02);
+    rightBoot.position.set(0.1 * scale, 0.06 * scale, 0.02);
     rightBoot.castShadow = true;
     group.add(rightBoot);
 
-    // Gun (rifle)
-    const gunBarrel = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 6);
-    const gunMat = new THREE.MeshLambertMaterial({ color: gunColor });
-    const gun = new THREE.Mesh(gunBarrel, gunMat);
-    gun.position.set(0.32, 0.65, 0.2);
-    gun.rotation.x = Math.PI / 2;
+    // Weapon based on type
+    let gun;
+    if (unitType === 'sniper') {
+        // Long sniper rifle
+        const rifleBarrel = new THREE.CylinderGeometry(0.015, 0.015, 0.8, 6);
+        gun = new THREE.Mesh(rifleBarrel, new THREE.MeshLambertMaterial({ color: gunColor }));
+        gun.position.set(0.32 * scale, 0.7 * scale, 0.25);
+        gun.rotation.x = Math.PI / 2;
+    } else if (unitType === 'tank') {
+        // Heavy machine gun
+        const mgBarrel = new THREE.CylinderGeometry(0.025, 0.025, 0.4, 8);
+        gun = new THREE.Mesh(mgBarrel, new THREE.MeshLambertMaterial({ color: gunColor }));
+        gun.position.set(0.35 * scale, 0.65 * scale, 0.15);
+        gun.rotation.x = Math.PI / 2;
+    } else if (unitType === 'medic') {
+        // Medkit (white box with cross)
+        const medkitGeom = new THREE.BoxGeometry(0.15, 0.12, 0.08);
+        gun = new THREE.Mesh(medkitGeom, new THREE.MeshLambertMaterial({ color: 0xffffff }));
+        gun.position.set(0.35 * scale, 0.6 * scale, 0.1);
+    } else {
+        // Standard rifle
+        const rifleBarrel = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 6);
+        gun = new THREE.Mesh(rifleBarrel, new THREE.MeshLambertMaterial({ color: gunColor }));
+        gun.position.set(0.32 * scale, 0.65 * scale, 0.2);
+        gun.rotation.x = Math.PI / 2;
+    }
     gun.castShadow = true;
     group.add(gun);
 
+    // Medic cross on helmet
+    if (unitType === 'medic') {
+        const crossMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.02), crossMat);
+        crossH.position.set(0, 1.25 * scale, 0.15 * scale);
+        group.add(crossH);
+        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.08, 0.02), crossMat);
+        crossV.position.set(0, 1.25 * scale, 0.15 * scale);
+        group.add(crossV);
+    }
+
     // Selection ring
-    const selGeom = new THREE.RingGeometry(0.28, 0.38, 16);
+    const selGeom = new THREE.RingGeometry(0.28 * scale, 0.38 * scale, 16);
     const selMat = new THREE.MeshBasicMaterial({ color: isRed ? 0x00ff00 : 0xff0000, side: THREE.DoubleSide });
     const selRing = new THREE.Mesh(selGeom, selMat);
     selRing.rotation.x = -Math.PI / 2;
@@ -193,7 +288,7 @@ function createSoldier(x, z, team) {
     const hpBarBgGeom = new THREE.PlaneGeometry(0.5, 0.06);
     const hpBarBgMat = new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide });
     const hpBarBg = new THREE.Mesh(hpBarBgGeom, hpBarBgMat);
-    hpBarBg.position.y = 1.45;
+    hpBarBg.position.y = 1.45 * scale;
     hpBarBg.rotation.x = -Math.PI / 4;
     group.add(hpBarBg);
 
@@ -211,8 +306,18 @@ function createSoldier(x, z, team) {
     const unit = {
         mesh: group,
         team,
-        hp: SOLDIER_HP,
-        maxHp: SOLDIER_HP,
+        unitType,
+        typeConfig,
+        hp: typeConfig.hp,
+        maxHp: typeConfig.hp,
+        speed: typeConfig.speed,
+        damage: typeConfig.damage,
+        attackRange: typeConfig.attackRange,
+        attackCooldown: typeConfig.attackCooldown,
+        canHeal: typeConfig.canHeal,
+        healAmount: typeConfig.healAmount || 0,
+        healCooldown: typeConfig.healCooldown || 2000,
+        lastHealTime: 0,
         selected: false,
         selRing,
         hpBar,
@@ -241,12 +346,19 @@ function createSoldier(x, z, team) {
 }
 
 function spawnInitialUnits() {
-    for (let i = 0; i < 5; i++) {
-        createSoldier(-HALF_GRID + 4 + i * 2, -2 + i * 2, 'red');
-    }
-    for (let i = 0; i < 5; i++) {
-        createSoldier(HALF_GRID - 4 - i * 2, -2 + i * 2, 'gray');
-    }
+    // Red team (player) - mixed units
+    createSoldier(-HALF_GRID + 4, -2, 'red', 'soldier');
+    createSoldier(-HALF_GRID + 6, -2, 'red', 'soldier');
+    createSoldier(-HALF_GRID + 8, -2, 'red', 'tank');
+    createSoldier(-HALF_GRID + 4, 0, 'red', 'sniper');
+    createSoldier(-HALF_GRID + 6, 0, 'red', 'medic');
+
+    // Gray team (enemy) - mixed units
+    createSoldier(HALF_GRID - 4, -2, 'gray', 'soldier');
+    createSoldier(HALF_GRID - 6, -2, 'gray', 'soldier');
+    createSoldier(HALF_GRID - 8, -2, 'gray', 'tank');
+    createSoldier(HALF_GRID - 4, 0, 'gray', 'sniper');
+    createSoldier(HALF_GRID - 6, 0, 'gray', 'medic');
 }
 
 function worldToGrid(x, z) {
@@ -418,20 +530,43 @@ function computeFormationPositions(center, count) {
 }
 
 function moveUnit(unit, dt) {
+    // Medic healing logic
+    if (unit.canHeal && unit.team === 'red') {
+        const now = Date.now();
+        if (now - unit.lastHealTime >= unit.healCooldown) {
+            // Find nearby injured allies
+            for (const other of units) {
+                if (!other.alive || other.team !== unit.team || other === unit) continue;
+                if (other.hp >= other.maxHp) continue;
+                const dist = unit.mesh.position.distanceTo(other.mesh.position);
+                if (dist <= unit.attackRange) {
+                    other.hp = Math.min(other.hp + unit.healAmount, other.maxHp);
+                    unit.lastHealTime = now;
+                    // Visual feedback - flash green
+                    other.hpBar.material.color.setHex(0x00ff00);
+                    break;
+                }
+            }
+        }
+    }
+
     if (unit.attackTarget && unit.attackTarget.alive) {
         const dist = unit.mesh.position.distanceTo(unit.attackTarget.mesh.position);
-        if (dist <= ATTACK_RANGE) {
+        if (dist <= unit.attackRange) {
             unit.path = [];
             unit.pathIndex = 0;
             unit.target = null;
             const now = Date.now();
-            if (now - unit.lastAttackTime >= ATTACK_COOLDOWN) {
-                unit.attackTarget.hp -= ATTACK_DAMAGE;
-                unit.attackTarget.lastAttacker = unit;
-                unit.lastAttackTime = now;
-                if (unit.attackTarget.hp <= 0) {
-                    killUnit(unit.attackTarget);
-                    unit.attackTarget = null;
+            if (now - unit.lastAttackTime >= unit.attackCooldown) {
+                // Medics don't attack enemies
+                if (!unit.canHeal) {
+                    unit.attackTarget.hp -= unit.damage;
+                    unit.attackTarget.lastAttacker = unit;
+                    unit.lastAttackTime = now;
+                    if (unit.attackTarget.hp <= 0) {
+                        killUnit(unit.attackTarget);
+                        unit.attackTarget = null;
+                    }
                 }
             }
             return;
@@ -472,7 +607,7 @@ function moveUnit(unit, dt) {
         }
 
         dir.normalize();
-        unit.mesh.position.add(dir.multiplyScalar(SOLDIER_SPEED * dt));
+        unit.mesh.position.add(dir.multiplyScalar(unit.speed * dt));
         unit.mesh.rotation.y = Math.atan2(dir.x, dir.z);
         unit.isMoving = true;
         return;
@@ -490,7 +625,7 @@ function moveUnit(unit, dt) {
     }
 
     dir.normalize();
-    unit.mesh.position.add(dir.multiplyScalar(SOLDIER_SPEED * dt));
+    unit.mesh.position.add(dir.multiplyScalar(unit.speed * dt));
     unit.mesh.rotation.y = Math.atan2(dir.x, dir.z);
     unit.isMoving = true;
 }
@@ -565,10 +700,12 @@ function killUnit(unit) {
         if (killer) {
             const offsetX = (Math.random() - 0.5) * 2;
             const offsetZ = (Math.random() - 0.5) * 2;
+            // Spawn same type as the killed unit
             const newUnit = createSoldier(
                 killer.mesh.position.x + offsetX,
                 killer.mesh.position.z + offsetZ,
-                'red'
+                'red',
+                unit.unitType
             );
             selectUnit(newUnit);
         }
@@ -578,10 +715,25 @@ function killUnit(unit) {
 }
 
 function updateUI() {
-    const redCount = units.filter(u => u.alive && u.team === 'red').length;
-    const grayCount = units.filter(u => u.alive && u.team === 'gray').length;
-    redCountEl.textContent = `Rojos: ${redCount}`;
-    grayCountEl.textContent = `Grises: ${grayCount} | Oleada: ${waveNumber}`;
+    const redUnits = units.filter(u => u.alive && u.team === 'red');
+    const grayUnits = units.filter(u => u.alive && u.team === 'gray');
+    
+    // Count by type
+    const redCounts = {};
+    const grayCounts = {};
+    redUnits.forEach(u => { redCounts[u.unitType] = (redCounts[u.unitType] || 0) + 1; });
+    grayUnits.forEach(u => { grayCounts[u.unitType] = (grayCounts[u.unitType] || 0) + 1; });
+    
+    // Format display
+    const formatCounts = (counts) => {
+        return Object.entries(counts).map(([type, count]) => {
+            const icon = type === 'tank' ? '🛡️' : type === 'sniper' ? '🎯' : type === 'medic' ? '💊' : '⚔️';
+            return `${icon}${count}`;
+        }).join(' ');
+    };
+    
+    redCountEl.textContent = `Rojos: ${redUnits.length} ${formatCounts(redCounts)}`;
+    grayCountEl.textContent = `Grises: ${grayUnits.length} ${formatCounts(grayCounts)} | Oleada: ${waveNumber}`;
 }
 
 function checkGameOver() {
@@ -608,7 +760,11 @@ function spawnWaveEnemy() {
         z = HALF_GRID - 2;
     }
 
-    const unit = createSoldier(x, z, 'gray');
+    // Random unit type for waves
+    const types = ['soldier', 'soldier', 'soldier', 'tank', 'sniper'];
+    const unitType = types[Math.floor(Math.random() * types.length)];
+    
+    const unit = createSoldier(x, z, 'gray', unitType);
     const nearest = findNearestEnemy(unit);
     if (nearest) unit.attackTarget = nearest;
 }
